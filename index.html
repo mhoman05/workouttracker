@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d0d">
+<title>Workout Tracker</title>
+<link id="pwa-manifest" rel="manifest">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0d0d0d;--surface:#1c1c1e;--card:#252528;--border:#2c2c2e;
+  --text:#fff;--sub:#8e8e93;--dim:#48484a;
+  --blue:#4a9eff;--blue-bg:rgba(74,158,255,.15);--blue-bd:rgba(74,158,255,.3);
+  --green:#30d158;--green-bg:rgba(48,209,88,.12);--green-bd:rgba(48,209,88,.3);
+  --orange:#ff9f0a;--orange-bg:rgba(255,159,10,.12);--orange-bd:rgba(255,159,10,.3);
+  --purple:#bf5af2;--purple-bg:rgba(191,90,242,.12);--purple-bd:rgba(191,90,242,.3);
+  --yellow:#ffd60a;--red:#ff453a;--red-bg:rgba(255,69,58,.12);--red-bd:rgba(255,69,58,.3);
+  --nav-h:64px;--safe-top:env(safe-area-inset-top,0px);--safe-bot:env(safe-area-inset-bottom,0px);
+  --r:14px;--rs:10px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;overscroll-behavior:none}
+#root{height:100%;display:flex;flex-direction:column}
+.screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bot) + 16px)}
+.screen.nonav{padding-bottom:32px}
+.pad{padding:0 16px 16px}
+.ptop{padding-top:calc(var(--safe-top) + 14px)}
+.nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-bot));background:rgba(28,28,30,.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--border);display:flex;align-items:flex-start;padding-top:8px;z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 0;color:var(--sub)}
+.nav-btn.active{color:var(--blue)}.nav-icon{font-size:22px;line-height:1}.nav-lbl{font-size:10px;letter-spacing:.2px}
+.bkhdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:.5px solid var(--border);background:rgba(13,13,13,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;top:0;z-index:50}
+.bkhdr-back{color:var(--blue);background:none;border:none;cursor:pointer;font-size:17px;padding:4px 0;display:flex;align-items:center;gap:2px;min-width:60px}
+.bkhdr-title{font-size:16px;font-weight:600;text-align:center;flex:1}
+.bkhdr-right{min-width:60px;display:flex;justify-content:flex-end}
+.card{background:var(--card);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.ci{padding:14px 16px}
+.btn{border:none;border-radius:var(--rs);padding:12px 20px;font-size:15px;font-weight:600;cursor:pointer;width:100%;transition:opacity .15s}
+.btn:active{opacity:.72}
+.btn-blue{background:var(--blue-bg);color:var(--blue)}.btn-green{background:var(--green-bg);color:var(--green)}
+.btn-ghost{background:var(--card);color:var(--sub);border:.5px solid var(--border)}
+.btn-red{background:var(--red-bg);color:var(--red)}.btn-purple{background:var(--purple-bg);color:var(--purple)}
+.btn-sm{padding:9px 14px;font-size:13px;border-radius:8px}
+input[type=number],input[type=text],input[type=password],textarea{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);color:var(--text);padding:10px;outline:none}
+input[type=number]{font-size:24px;font-weight:700;text-align:center;width:100%;-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
+input[type=number]:focus,input[type=text]:focus,input[type=password]:focus,textarea:focus{border-color:var(--blue)}
+input[type=text],input[type=password]{font-size:14px;width:100%}
+textarea{font-size:13px;width:100%;resize:vertical;line-height:1.5;min-height:100px}
+select{background:var(--card);border:.5px solid var(--border);border-radius:var(--rs);color:var(--text);font-size:14px;padding:12px;width:100%;outline:none}
+.tag{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-orange{background:var(--orange-bg);color:var(--orange)}.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.chip{display:inline-flex;align-items:center;gap:2px;padding:3px 4px 3px 10px;border-radius:20px;font-size:11px;font-weight:600;margin:2px}
+.chip-work{background:var(--green-bg);color:var(--green)}.chip-warm{background:rgba(142,142,147,.12);color:var(--sub)}
+.chip-del{background:none;border:none;cursor:pointer;font-size:14px;padding:0 4px;line-height:1}
+.equip-chip{padding:7px 12px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--sub);cursor:pointer;margin:3px}
+.equip-chip.sel{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue)}
+.bubble{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1.5px solid var(--dim);color:var(--dim)}
+.bubble.done{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.sec{font-size:11px;font-weight:600;letter-spacing:.8px;color:var(--sub);text-transform:uppercase;margin:18px 0 8px;padding:0 2px;display:flex;align-items:center;gap:6px}
+.between{display:flex;justify-content:space-between;align-items:center}
+.row{display:flex;gap:8px}
+.stickhdr{position:sticky;top:0;background:rgba(13,13,13,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:50;border-bottom:.5px solid var(--border);padding:12px 16px}
+.restbanner{background:var(--orange-bg);border:.5px solid var(--orange-bd);border-radius:var(--rs);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.progbar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px}
+.progfill{height:100%;background:var(--blue);border-radius:2px;transition:width .4s}
+.wakebadge{display:inline-flex;align-items:center;gap:4px;background:rgba(255,214,10,.1);border:.5px solid rgba(255,214,10,.25);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:600;color:var(--yellow)}
+.note-chip{display:inline-flex;align-items:center;gap:4px;background:rgba(74,158,255,.08);color:var(--blue);border:.5px solid var(--blue-bd);border-radius:10px;padding:4px 10px;font-size:11px;margin-top:8px;width:100%;cursor:pointer}
+.tsel{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.tsel-btn{padding:8px;font-size:13px;font-weight:600;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--sub);cursor:pointer}
+.tsel-btn.sel{border-color:var(--blue-bd);background:var(--blue-bg);color:var(--blue)}
+.tsel-btn.selw{border-color:rgba(142,142,147,.4);background:rgba(142,142,147,.1);color:var(--sub)}
+.ex-row-edit{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:.5px solid var(--border)}
+.ex-row-edit:last-child{border-bottom:none}
+.tog{width:28px;height:28px;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;background:none}
+.tog.on{border-color:var(--green);color:var(--green)}.tog.off{border-color:var(--dim);color:var(--dim)}
+.sumscreen{position:fixed;inset:0;background:var(--bg);z-index:200;overflow-y:auto;padding:48px 20px 40px;display:flex;flex-direction:column;align-items:center}
+.sumstat{background:var(--card);border-radius:var(--r);padding:16px;text-align:center}
+.resumebanner{background:rgba(74,158,255,.08);border:1px solid var(--blue-bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px}
+.sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:flex;align-items:flex-end}
+.sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px calc(24px + var(--safe-bot));width:100%;max-height:85vh;overflow-y:auto}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 20px}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:.5px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.toggle{width:50px;height:28px;border-radius:14px;position:relative;cursor:pointer;border:none;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}.toggle.off{background:var(--dim)}
+.toggle-knob{width:24px;height:24px;background:#fff;border-radius:50%;position:absolute;top:2px;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.toggle.on .toggle-knob{left:24px}.toggle.off .toggle-knob{left:2px}
+.cat-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.cat-tab{padding:10px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);color:var(--sub);font-size:14px;font-weight:500;cursor:pointer;text-align:center;transition:all .15s}
+.cat-tab.active{border-color:var(--purple-bd);background:var(--purple-bg);color:var(--purple)}
+.prompt-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px;font-size:12px;color:var(--sub);line-height:1.6;white-space:pre-wrap;max-height:200px;overflow-y:auto;word-break:break-all}
+.parsed-preview{background:rgba(48,209,88,.06);border:1px solid var(--green-bd);border-radius:var(--rs);padding:14px;margin-top:12px}
+h1{font-size:28px;font-weight:700;letter-spacing:-.5px}
+h2{font-size:22px;font-weight:700;letter-spacing:-.3px}
+.empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:15px;line-height:1.8}
+.notion-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(74,158,255,.08);border:.5px solid var(--blue-bd);border-radius:8px;padding:4px 10px;font-size:12px;color:var(--blue)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+// ── PWA ──────────────────────────────────────────────────────
+(function(){
+  const c=document.createElement('canvas');c.width=c.height=512;
+  const x=c.getContext('2d');
+  x.fillStyle='#1a1a2e';x.beginPath();x.roundRect(0,0,512,512,80);x.fill();
+  x.strokeStyle='#4a9eff';x.lineWidth=36;x.lineCap='round';
+  x.beginPath();x.moveTo(176,256);x.lineTo(336,256);x.stroke();
+  x.lineWidth=76;[[148,200,148,312],[364,200,364,312]].forEach(([a,b,c2,d])=>{x.beginPath();x.moveTo(a,b);x.lineTo(c2,d);x.stroke();});
+  x.strokeStyle='rgba(74,158,255,.35)';x.lineWidth=36;
+  [[108,220,108,292],[404,220,404,292]].forEach(([a,b,c2,d])=>{x.beginPath();x.moveTo(a,b);x.lineTo(c2,d);x.stroke();});
+  const icon=c.toDataURL('image/png');
+  const mf={name:'Workout Tracker',short_name:'Workout',start_url:'.',display:'standalone',background_color:'#0d0d0d',theme_color:'#0d0d0d',icons:[{src:icon,sizes:'512x512',type:'image/png'}]};
+  document.getElementById('pwa-manifest').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/json'}));
+  if('serviceWorker' in navigator){
+    const sw=`const V='wt-v5';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>caches.match(e.request))));`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'application/javascript'}))).catch(()=>{});
+  }
+})();
+
+// ── CONSTANTS ─────────────────────────────────────────────────
+const LS='mh-workout-v3',SK='mh-session-v3',PK='mh-plan-v3',NK='mh-notion-v1';
+const DAYS=[
+  {id:0,name:'Chest',short:'Mon',blocks:[
+    {type:'bls',label:'BLS Strength',exercises:[
+      {id:'bench',name:'Barbell Bench Press',sets:3,reps:'4–6',rest:180},
+      {id:'incline',name:'Incline Barbell Press',sets:3,reps:'4–6',rest:180},
+      {id:'dips',name:'Weighted Dips',sets:3,reps:'6–8',rest:120},
+      {id:'cfly',name:'Cable Fly',sets:2,reps:'8–10',rest:60},
+    ]},
+    {type:'sport',label:'Shoulder Health',exercises:[
+      {id:'extrot',name:'Band External Rotation',sets:2,reps:'15/side',rest:45},
+      {id:'rwrist',name:'Reverse Wrist Curl',sets:2,reps:'15',rest:45},
+      {id:'pronsup',name:'Pronation / Supination',sets:2,reps:'12/side',rest:30},
+    ]},
+  ]},
+  {id:1,name:'Back',short:'Tue',blocks:[
+    {type:'bls',label:'BLS Strength',exercises:[
+      {id:'deadlift',name:'Deadlift',sets:3,reps:'4–6',rest:240},
+      {id:'brow',name:'Barbell Row',sets:3,reps:'4–6',rest:180},
+      {id:'pullup',name:'Weighted Pull-ups',sets:3,reps:'4–6',rest:150},
+      {id:'crow',name:'Cable Row',sets:3,reps:'8–10',rest:90},
+    ]},
+    {type:'sport',label:'Anti-Rotation Core',exercises:[
+      {id:'pallof',name:'Pallof Press',sets:3,reps:'10/side',rest:60},
+      {id:'abwheel',name:'Ab Wheel Rollout',sets:3,reps:'8–10',rest:60},
+      {id:'deadbug',name:'Dead Bug',sets:2,reps:'8/side',rest:45},
+    ]},
+  ]},
+  {id:2,name:'Shoulders',short:'Thu',blocks:[
+    {type:'bls',label:'BLS Strength',exercises:[
+      {id:'ohp',name:'Seated Barbell OHP',sets:3,reps:'4–6',rest:180},
+      {id:'dlat',name:'DB Lateral Raise',sets:3,reps:'8–10',rest:90},
+      {id:'blat',name:'Bent-over Lateral Raise',sets:3,reps:'8–10',rest:90},
+      {id:'shrug',name:'DB Shrugs',sets:3,reps:'8–10',rest:75},
+    ]},
+    {type:'sport',label:'Rotational Power',exercises:[
+      {id:'woodchop',name:'Cable Woodchop',sets:3,reps:'10/side',rest:60},
+      {id:'landmine',name:'Landmine Rotation',sets:3,reps:'8/side',rest:60},
+      {id:'slrdl',name:'Single-Leg RDL',sets:2,reps:'8/side',rest:45},
+    ]},
+  ]},
+  {id:3,name:'Arms',short:'Fri',blocks:[
+    {type:'bls',label:'BLS Strength',exercises:[
+      {id:'ezcurl',name:'EZ-Bar Curl',sets:3,reps:'4–6',rest:150},
+      {id:'idcurl',name:'Incline DB Curl',sets:3,reps:'8–10',rest:90},
+      {id:'hammer',name:'Hammer Curl',sets:2,reps:'8–10',rest:75},
+      {id:'cgbench',name:'Close-Grip Bench Press',sets:3,reps:'4–6',rest:150},
+      {id:'skull',name:'Skull Crushers',sets:3,reps:'8–10',rest:90},
+      {id:'pushdown',name:'Cable Pushdown',sets:2,reps:'8–10',rest:60},
+    ]},
+    {type:'sport',label:'Core + Hip Stability',exercises:[
+      {id:'copen',name:'Copenhagen Plank',sets:3,reps:'25s/side',rest:60},
+      {id:'hlraise',name:'Hanging Leg Raise',sets:3,reps:'12',rest:60},
+      {id:'bsidestep',name:'Banded Side Steps',sets:2,reps:'15/side',rest:45},
+    ]},
+  ]},
+  {id:4,name:'Legs',short:'Sat',blocks:[
+    {type:'bls',label:'BLS Strength',exercises:[
+      {id:'squat',name:'Back Squat',sets:3,reps:'4–6',rest:240},
+      {id:'fsquat',name:'Front Squat / Leg Press',sets:3,reps:'4–6',rest:180},
+      {id:'rdl',name:'Romanian Deadlift',sets:3,reps:'8–10',rest:150},
+      {id:'legcurl',name:'Leg Curl',sets:3,reps:'8–10',rest:90},
+      {id:'calf',name:'Standing Calf Raise',sets:4,reps:'8–10',rest:75},
+    ]},
+    {type:'run',label:'Running Maintenance',exercises:[
+      {id:'slcalf',name:'Single-Leg Calf Raise',sets:3,reps:'12/leg',rest:60},
+      {id:'glutemed',name:'Glute Med Abduction',sets:2,reps:'20/side',rest:45},
+      {id:'hipflex',name:'Hip Flexor March',sets:2,reps:'12/side',rest:45},
+    ]},
+  ]},
+];
+
+// ── ALTERNATIVE WORKOUTS ──────────────────────────────────────
+const ALT={
+bodyweight:[
+  {id:'bw0',name:'Chest',short:'BW',desc:'No equipment needed',blocks:[
+    {type:'bls',label:'Bodyweight Push',exercises:[
+      {id:'bwwp',name:'Wide Push-ups',sets:4,reps:'max',rest:90},
+      {id:'bwdec',name:'Decline Push-ups (feet elevated)',sets:3,reps:'12–15',rest:75},
+      {id:'bwdiam',name:'Diamond Push-ups',sets:3,reps:'8–12',rest:75},
+      {id:'bwarch',name:'Archer Push-ups',sets:3,reps:'6–8/side',rest:90},
+      {id:'bwcdip',name:'Chair Dips',sets:3,reps:'12–15',rest:75},
+    ]},
+    {type:'sport',label:'Shoulder Health',exercises:[
+      {id:'bwwext',name:'Wall External Rotation (isometric)',sets:2,reps:'20s/side',rest:30},
+      {id:'bwfloor',name:'Wrist Extension (on floor)',sets:2,reps:'15',rest:30},
+    ]},
+  ]},
+  {id:'bw1',name:'Back',short:'BW',desc:'Pull-up bar helpful, otherwise floor',blocks:[
+    {type:'bls',label:'Bodyweight Pull',exercises:[
+      {id:'bwpu',name:'Pull-ups / Chin-ups',sets:4,reps:'max',rest:120},
+      {id:'bwinvr',name:'Inverted Rows (under table)',sets:3,reps:'10–12',rest:90},
+      {id:'bwsup',name:'Superman Hold',sets:3,reps:'30s',rest:60},
+      {id:'bwgm',name:'Good Mornings (bodyweight)',sets:3,reps:'15',rest:60},
+      {id:'bwyta',name:'YTA Raises (prone on floor)',sets:2,reps:'12',rest:45},
+    ]},
+    {type:'sport',label:'Anti-Rotation Core',exercises:[
+      {id:'bwdb',name:'Dead Bug',sets:3,reps:'8/side',rest:45},
+      {id:'bwarp',name:'Anti-Rotation Plank Hold',sets:3,reps:'30s/side',rest:45},
+    ]},
+  ]},
+  {id:'bw2',name:'Shoulders',short:'BW',desc:'Pike push-ups + water bottles',blocks:[
+    {type:'bls',label:'Bodyweight Press & Raise',exercises:[
+      {id:'bwpike',name:'Pike Push-ups',sets:4,reps:'8–12',rest:90},
+      {id:'bwwhs',name:'Wall Handstand Push-up',sets:3,reps:'5–8',rest:120},
+      {id:'bwytw',name:'YTW Raises (prone floor)',sets:3,reps:'12',rest:60},
+      {id:'bwwblat',name:'Lateral Raise (water bottles)',sets:4,reps:'15–20',rest:60},
+      {id:'bwbpsh',name:'Backpack Shrugs',sets:3,reps:'15',rest:60},
+    ]},
+    {type:'sport',label:'Rotational Power',exercises:[
+      {id:'bwchop',name:'Bodyweight Rotation (golf swing sim.)',sets:3,reps:'10/side',rest:60},
+      {id:'bwslrdl',name:'Single-Leg RDL (bodyweight)',sets:2,reps:'8/side',rest:45},
+    ]},
+  ]},
+  {id:'bw3',name:'Arms',short:'BW',desc:'Chin-ups, dips, push-up variations',blocks:[
+    {type:'bls',label:'Bodyweight Arms',exercises:[
+      {id:'bwchins',name:'Chin-ups (supinated grip)',sets:4,reps:'max',rest:120},
+      {id:'bwhampu',name:'Hammer-grip Pull-ups',sets:3,reps:'max',rest:90},
+      {id:'bwcgpu',name:'Close-grip Push-ups',sets:3,reps:'12–15',rest:75},
+      {id:'bwtridip',name:'Tricep Dips (chair)',sets:3,reps:'12–15',rest:75},
+      {id:'bwdiam2',name:'Diamond Push-ups',sets:2,reps:'max',rest:60},
+    ]},
+    {type:'sport',label:'Core + Hip Stability',exercises:[
+      {id:'bwcopen',name:'Copenhagen Plank',sets:3,reps:'25s/side',rest:60},
+      {id:'bwhlr',name:'Hanging Leg Raise (or floor)',sets:3,reps:'12',rest:60},
+    ]},
+  ]},
+  {id:'bw4',name:'Legs',short:'BW',desc:'Single-leg variations, no equipment',blocks:[
+    {type:'bls',label:'Bodyweight Legs',exercises:[
+      {id:'bwbss',name:'Bulgarian Split Squat',sets:4,reps:'10/side',rest:120},
+      {id:'bwjsq',name:'Jump Squats',sets:3,reps:'15',rest:90},
+      {id:'bwlunge',name:'Walking Lunges',sets:3,reps:'12/side',rest:75},
+      {id:'bwslhip',name:'Single-leg Hip Thrust (floor)',sets:3,reps:'12/side',rest:75},
+      {id:'bwnord',name:'Nordic Curl (feet anchored)',sets:3,reps:'5–8',rest:120},
+    ]},
+    {type:'run',label:'Running Maintenance',exercises:[
+      {id:'bwslcalf',name:'Single-Leg Calf Raise (slow)',sets:4,reps:'15/leg',rest:60},
+      {id:'bwclam',name:'Clamshell (bodyweight)',sets:2,reps:'20/side',rest:45},
+      {id:'bwhfm',name:'Standing Hip Flexor March',sets:2,reps:'12/side',rest:45},
+    ]},
+  ]},
+],
+hotel:[
+  {id:'hg0',name:'Chest',short:'HG',desc:'Dumbbells + bench',blocks:[
+    {type:'bls',label:'DB Strength',exercises:[
+      {id:'hgdbb',name:'DB Bench Press',sets:4,reps:'6–10',rest:150},
+      {id:'hgdbinc',name:'DB Incline Press',sets:3,reps:'8–10',rest:120},
+      {id:'hgdbfly',name:'DB Fly (floor or bench)',sets:3,reps:'10–12',rest:90},
+      {id:'hgohtri',name:'DB Overhead Tricep Extension',sets:3,reps:'10–12',rest:75},
+      {id:'hgcgpu',name:'Close-grip Push-ups',sets:2,reps:'max',rest:60},
+    ]},
+    {type:'sport',label:'Shoulder Health',exercises:[
+      {id:'hgextrot',name:'DB External Rotation (side-lying)',sets:2,reps:'15',rest:45},
+      {id:'hgrwrist',name:'Reverse Wrist Curl (light DB)',sets:2,reps:'15',rest:30},
+    ]},
+  ]},
+  {id:'hg1',name:'Back',short:'HG',desc:'Dumbbells + bench',blocks:[
+    {type:'bls',label:'DB Strength',exercises:[
+      {id:'hgdbrdl',name:'DB Romanian Deadlift',sets:3,reps:'8–10',rest:150},
+      {id:'hgsarow',name:'Single-arm DB Row',sets:4,reps:'8–10/arm',rest:120},
+      {id:'hgdbpull',name:'DB Pullover (on bench)',sets:3,reps:'10–12',rest:90},
+      {id:'hgrdfly',name:'DB Rear Delt Fly',sets:3,reps:'15',rest:75},
+      {id:'hgdbcurl',name:'DB Bicep Curl',sets:3,reps:'10–12',rest:75},
+    ]},
+    {type:'sport',label:'Anti-Rotation Core',exercises:[
+      {id:'hgdb',name:'Dead Bug',sets:3,reps:'8/side',rest:45},
+      {id:'hgabw',name:'Ab Wheel Rollout',sets:3,reps:'8–10',rest:60},
+    ]},
+  ]},
+  {id:'hg2',name:'Shoulders',short:'HG',desc:'Dumbbells',blocks:[
+    {type:'bls',label:'DB Strength',exercises:[
+      {id:'hgdbohp',name:'DB Shoulder Press',sets:4,reps:'8–10',rest:150},
+      {id:'hgdblat',name:'DB Lateral Raise',sets:4,reps:'12–15',rest:90},
+      {id:'hgdbbl',name:'DB Bent-over Lateral',sets:3,reps:'12–15',rest:90},
+      {id:'hgdbsh',name:'DB Shrugs',sets:3,reps:'12–15',rest:75},
+    ]},
+    {type:'sport',label:'Rotational Power',exercises:[
+      {id:'hgdbwc',name:'DB Woodchop (light)',sets:3,reps:'10/side',rest:60},
+      {id:'hgdbsl',name:'DB Single-Leg RDL',sets:2,reps:'8/side',rest:60},
+    ]},
+  ]},
+  {id:'hg3',name:'Arms',short:'HG',desc:'Dumbbells',blocks:[
+    {type:'bls',label:'DB Arms',exercises:[
+      {id:'hgcurl',name:'DB Curl',sets:3,reps:'8–10',rest:120},
+      {id:'hgham',name:'DB Hammer Curl',sets:3,reps:'10–12',rest:90},
+      {id:'hgincc',name:'DB Incline Curl',sets:2,reps:'10–12',rest:90},
+      {id:'hgohtri2',name:'DB Overhead Tricep Extension',sets:3,reps:'10–12',rest:90},
+      {id:'hgkick',name:'DB Tricep Kickback',sets:3,reps:'12–15',rest:75},
+    ]},
+    {type:'sport',label:'Core + Hip Stability',exercises:[
+      {id:'hgcopen',name:'Copenhagen Plank',sets:3,reps:'25s/side',rest:60},
+      {id:'hghlr',name:'Hanging Leg Raise',sets:3,reps:'12',rest:60},
+    ]},
+  ]},
+  {id:'hg4',name:'Legs',short:'HG',desc:'Dumbbells',blocks:[
+    {type:'bls',label:'DB Legs',exercises:[
+      {id:'hggob',name:'DB Goblet Squat',sets:4,reps:'10–12',rest:150},
+      {id:'hgrdl2',name:'DB Romanian Deadlift',sets:3,reps:'10–12',rest:120},
+      {id:'hglunge',name:'DB Reverse Lunge',sets:3,reps:'10/side',rest:90},
+      {id:'hglegc',name:'DB Leg Curl (lying)',sets:3,reps:'12',rest:90},
+      {id:'hgslcalf',name:'Single-leg Calf Raise',sets:4,reps:'15',rest:60},
+    ]},
+    {type:'run',label:'Running Maintenance',exercises:[
+      {id:'hgslcr',name:'Single-Leg Calf Raise (slow)',sets:3,reps:'12/leg',rest:60},
+      {id:'hggmed',name:'Glute Med Abduction',sets:2,reps:'20/side',rest:45},
+      {id:'hghfm',name:'Hip Flexor March',sets:2,reps:'12/side',rest:45},
+    ]},
+  ]},
+]};
+
+const ALL_EX=[...DAYS.flatMap(d=>d.blocks.flatMap(b=>b.exercises.map(e=>({...e,dayName:d.name})))),
+  ...ALT.bodyweight.flatMap(d=>d.blocks.flatMap(b=>b.exercises.map(e=>({...e,dayName:'BW '+d.name})))),
+  ...ALT.hotel.flatMap(d=>d.blocks.flatMap(b=>b.exercises.map(e=>({...e,dayName:'HG '+d.name}))))];
+const BC={bls:'blue',sport:'green',run:'orange',main:'blue',custom:'purple'};
+const BL={bls:'BLS',sport:'Sport',run:'Run',main:'Main',custom:'Custom'};
+const DM={1:0,2:1,4:2,5:3,6:4};
+const loadJ=(k,def)=>{try{const s=localStorage.getItem(k);return s?JSON.parse(s):def;}catch{return def;}};
+const saveJ=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch{}};
+const fmtDate=d=>new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const fmtDur=s=>{const m=Math.floor(s/60),r=s%60;return r?`${m}m ${r}s`:`${m}m`;};
+const greet=()=>{const h=new Date().getHours();return h<12?'Morning':h<17?'Afternoon':'Evening';};
+const eff=(id,cp)=>{const day=DAYS[id],cust=cp[id]||{};return{...day,blocks:day.blocks.map(b=>({...b,exercises:b.exercises.map(ex=>({...ex,sets:cust[ex.id]?.sets??ex.sets,reps:cust[ex.id]?.reps??ex.reps,enabled:cust[ex.id]?.enabled!==false}))}))};};
+const getDayName=log=>log.dayName||(typeof log.dayId==='number'?DAYS[log.dayId]?.name:null)||'Custom';
+
+// ── NOTION ────────────────────────────────────────────────────
+const NAPI='https://api.notion.com/v1',DEFAULT_DB='95422c7cee3341fc803b6a1268309acd';
+
+// Cloudflare Worker code — user deploys this once at workers.cloudflare.com
+const CF_WORKER=`const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PATCH,DELETE,OPTIONS','Access-Control-Allow-Headers':'Authorization,Content-Type,Notion-Version'};
+export default{async fetch(req){
+  if(req.method==='OPTIONS')return new Response(null,{status:204,headers:C});
+  const u=new URL(req.url);
+  const r=await fetch('https://api.notion.com'+u.pathname+u.search,{
+    method:req.method,
+    headers:{'Authorization':req.headers.get('Authorization')||'','Content-Type':'application/json','Notion-Version':req.headers.get('Notion-Version')||'2022-06-28'},
+    body:req.method!=='GET'&&req.method!=='HEAD'?req.body:null
+  });
+  return new Response(await r.text(),{status:r.status,headers:{...C,'Content-Type':'application/json'}});
+}};`;
+
+// nFetch — uses your Cloudflare Worker URL as the API base
+const nFetch=async(method,path,body,token,workerUrl)=>{
+  if(!workerUrl)throw new Error('No proxy configured. Set up your Cloudflare Worker in Settings.');
+  // Strip any invisible/non-ASCII characters that break HTTP headers (common copy-paste issue)
+  const tok=(token||'').replace(/[^\x20-\x7E]/g,'').trim();
+  const base=(workerUrl||'').replace(/[^\x20-\x7E]/g,'').trim().replace(/\/$/,'');
+  if(!tok)throw new Error('API token is empty — paste it again in Settings.');
+  if(!base)throw new Error('Worker URL is empty — paste it in Settings.');
+  const url=base+'/v1'+path;
+  const res=await fetch(url,{method,
+    headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json','Notion-Version':'2022-06-28'},
+    body:body?JSON.stringify(body):undefined});
+  let d;try{d=await res.json();}catch{d={};}
+  if(!res.ok)throw new Error(d.message||(res.status===401?'Invalid token — check your API key':res.status===404?'Database not found — check the ID':'Notion error '+res.status));
+  return d;
+};
+const chunkRT=(s,n=1990)=>{const r=[];for(let i=0;i<s.length;i+=n)r.push({type:'text',text:{content:s.slice(i,i+n)}});return r;};
+const syncLog=async(log,ns)=>{
+  const{token,dbId,workerUrl}=ns;const dayName=getDayName(log);
+  const working=Object.values(log.exercises).reduce((s,a)=>s+a.filter(x=>!x.warmup).length,0);
+  const warms=Object.values(log.exercises).reduce((s,a)=>s+a.filter(x=>x.warmup).length,0);
+  const exLines=Object.entries(log.exercises).map(([exId,sets])=>{
+    const ex=ALL_EX.find(e=>e.id===exId);
+    const ws=sets.filter(s=>!s.warmup),wm=sets.filter(s=>s.warmup);
+    let l=(ex?.name||exId)+': ';
+    if(wm.length)l+='[W: '+wm.map(s=>s.weight?s.weight+'×'+s.reps:'BW×'+s.reps).join(', ')+'] ';
+    return l+ws.map(s=>s.weight?s.weight+'kg×'+s.reps:'BW×'+s.reps).join(', ');
+  }).join('\n');
+  const topLifts=Object.entries(log.exercises).map(([exId,sets])=>{
+    const ws=sets.filter(s=>!s.warmup&&s.weight>0);if(!ws.length)return null;
+    const ex=ALL_EX.find(e=>e.id===exId);const max=Math.max(...ws.map(s=>s.weight));
+    return(ex?.name||exId)+' '+max+'kg×'+ws.find(s=>s.weight===max)?.reps;
+  }).filter(Boolean).slice(0,4).join(', ');
+  const noteText=Object.entries(log.notes||{}).filter(([,n])=>n).map(([exId,n])=>(ALL_EX.find(e=>e.id===exId)?.name||exId)+': '+n).join('\n');
+  const title=dayName+' · '+new Date(log.date+'T12:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  await nFetch('POST','/pages',{parent:{database_id:dbId},properties:{
+    'Workout':{title:[{text:{content:title}}]},'Date':{date:{start:log.date}},'Day':{select:{name:dayName}},
+    'Duration (min)':{number:Math.round(log.dur/60)},'Working Sets':{number:working},'Warmup Sets':{number:warms},
+    'Top Lifts':{rich_text:[{text:{content:topLifts}}]},'Exercises':{rich_text:[{text:{content:exLines.substring(0,1990)}}]},
+    'Notes':{rich_text:[{text:{content:noteText.substring(0,1990)}}]},'App ID':{rich_text:[{text:{content:log.id}}]},
+    'Synced From':{select:{name:'PWA'}},
+  },children:[{object:'block',type:'code',code:{language:'json',rich_text:chunkRT(JSON.stringify(log))}}]},token,workerUrl);
+};
+const importFromNotion=async(ns)=>{
+  const{token,dbId,workerUrl}=ns;let all=[],cursor;
+  do{const body={sorts:[{property:'Date',direction:'ascending'}],page_size:100};
+    if(cursor)body.start_cursor=cursor;
+    const d=await nFetch('POST',`/databases/${dbId}/query`,body,token,workerUrl);
+    all=all.concat(d.results);cursor=d.has_more?d.next_cursor:undefined;
+  }while(cursor);
+  const imported=[];
+  for(const page of all){try{const blocks=await nFetch('GET',`/blocks/${page.id}/children`,null,token,workerUrl);const cb=blocks.results.find(b=>b.type==='code');if(cb){const s=cb.code.rich_text.map(r=>r.text.content).join('');imported.push(JSON.parse(s));}}catch{}}
+  return imported;
+};
+
+// ── PROMPT GENERATOR TEMPLATE ─────────────────────────────────
+const EQUIP_OPTIONS=['Barbell + rack','Dumbbells','Cable machine','Pull-up bar','Bench','Resistance bands','Kettlebell','Bodyweight only'];
+const FOCUS_OPTIONS=['Chest','Back','Shoulders','Arms (biceps + triceps)','Legs (quad focus)','Legs (posterior + glutes)','Push (chest, shoulders, triceps)','Pull (back, biceps)','Full body','Core + rotational (golf/tennis)'];
+const DURATION_OPTIONS=[15,20,30,45,60,75,90];
+const buildPrompt=(equip,duration,focus,notes)=>`You are designing a workout for an advanced lifter (3+ years). Context: active golfer (2.2 handicap), tennis and padel player, BLS-style strength programming background.
+
+Situation:
+• Equipment available: ${equip.length?equip.join(', '):'Bodyweight only — no equipment'}
+• Time available: ${duration} minutes
+• Muscle focus: ${focus||'balanced / full body'}${notes?'\n• Additional context: '+notes:''}
+
+Return ONLY valid JSON — no explanation, no markdown, just the raw JSON object:
+
+{
+  "name": "Descriptive name for this workout",
+  "blocks": [
+    {
+      "label": "Block name (e.g. Main Strength)",
+      "type": "main",
+      "exercises": [
+        {
+          "id": "unique-hyphenated-id",
+          "name": "Exercise Name",
+          "sets": 3,
+          "reps": "8-10",
+          "rest": 90,
+          "note": "Brief cue (optional, max 50 chars)"
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Only use the equipment listed
+- Fit within ${duration} minutes including all rest periods (estimate ~3-4 min per heavy set with rest, ~2 min per accessory set)
+- 2–3 blocks, 3–5 exercises each
+- rest is in seconds between sets
+- For bodyweight exercises, rest field still applies; users log weight as 0
+- If time allows, include a sport/stability block with 1–2 rotational or anti-rotation exercises for golf/tennis
+- id values must be lowercase with hyphens only`;
+
+const parseWorkoutJSON=(text)=>{
+  let s=text.trim().replace(/^```(?:json)?\n?/,'').replace(/\n?```$/,'');
+  const m=s.match(/\{[\s\S]*\}/);if(m)s=m[0];
+  const data=JSON.parse(s);
+  if(!data.blocks||!Array.isArray(data.blocks))throw new Error('Missing blocks array');
+  return{id:'custom-'+Date.now(),name:data.name||'Custom Workout',short:'Custom',isCustom:true,
+    blocks:data.blocks.map(b=>({type:b.type||'main',label:b.label||'Exercises',
+      exercises:(b.exercises||[]).map(ex=>({
+        id:ex.id||'ex-'+Math.random().toString(36).slice(2,8),
+        name:ex.name,sets:Number(ex.sets)||3,reps:String(ex.reps||'8-10'),
+        rest:Number(ex.rest)||90,enabled:true,note:ex.note||'',
+      }))
+    }))
+  };
+};
+
+// ── APP ───────────────────────────────────────────────────────
+const{useState,useEffect,useRef}=React;
+function App(){
+  const[screen,setScreen]=useState('home');
+  const[navTab,setNavTab]=useState('home');
+  const[logs,setLogs]=useState(()=>loadJ(LS,[]));
+  const[cp,setCp]=useState(()=>loadJ(PK,{}));
+  const[ns,setNs]=useState(()=>loadJ(NK,{token:'',dbId:DEFAULT_DB,autoSync:true}));
+  const[saved,setSaved]=useState(()=>loadJ(SK,null));
+  // preview/edit
+  const[pvCfg,setPvCfg]=useState(null); // full day config being previewed
+  const[editBuf,setEditBuf]=useState({});
+  const[editingReps,setEditingReps]=useState(null);
+  // active workout
+  const[activeCfg,setActiveCfg]=useState(null); // full config of current workout
+  const[sets,setSets]=useState({});
+  const[exNotes,setExNotes]=useState({});
+  const[addingTo,setAddingTo]=useState(null);
+  const[showNoteFor,setShowNoteFor]=useState(null);
+  const[inp,setInp]=useState({weight:'',reps:'',warmup:false});
+  const[restSec,setRestSec]=useState(0);
+  const[restOn,setRestOn]=useState(false);
+  const[workStart,setWorkStart]=useState(null);
+  const[elapsed,setElapsed]=useState(0);
+  const[wl,setWl]=useState(false);
+  const[summary,setSummary]=useState(null);
+  const[showFinish,setShowFinish]=useState(false);
+  const[syncStatus,setSyncStatus]=useState(null);
+  // history detail
+  const[hd,setHd]=useState(null);
+  const[hdEditSet,setHdEditSet]=useState(null);
+  const[hdSetInp,setHdSetInp]=useState({weight:'',reps:''});
+  const[confirmDel,setConfirmDel]=useState(false);
+  // settings
+  const[nsDraft,setNsDraft]=useState(null);
+  const[testStatus,setTestStatus]=useState(null);
+  const[importStatus,setImportStatus]=useState(null);
+  // tools tab
+  const[altCat,setAltCat]=useState('bodyweight');
+  // prompt generator
+  const[pgEquip,setPgEquip]=useState([]);
+  const[pgDur,setPgDur]=useState(45);
+  const[pgFocus,setPgFocus]=useState('');
+  const[pgNotes,setPgNotes]=useState('');
+  const[pgPrompt,setPgPrompt]=useState('');
+  const[pgResp,setPgResp]=useState('');
+  const[pgParsed,setPgParsed]=useState(null);
+  const[pgErr,setPgErr]=useState('');
+  const[pgCopied,setPgCopied]=useState(false);
+  // progress
+  const[progEx,setProgEx]=useState(ALL_EX[0]?.id||'');
+  const[cfCopied,setCfCopied]=useState(false);
+  const wlRef=useRef();const restRef=useRef();const elRef=useRef();
+
+  // timers
+  useEffect(()=>{if(restOn&&restSec>0)restRef.current=setTimeout(()=>setRestSec(s=>s-1),1000);else if(restSec===0)setRestOn(false);return()=>clearTimeout(restRef.current);},[restOn,restSec]);
+  useEffect(()=>{if(workStart)elRef.current=setInterval(()=>setElapsed(Math.floor((Date.now()-workStart)/1000)),1000);else clearInterval(elRef.current);return()=>clearInterval(elRef.current);},[workStart]);
+  // autosave
+  useEffect(()=>{if(activeCfg&&workStart)saveJ(SK,{dayId:activeCfg.id,dayName:activeCfg.name,sets,exNotes,workStart,activeCfg});},[sets,exNotes,activeCfg,workStart]);
+  // wake lock
+  const acqWL=async()=>{if(!('wakeLock' in navigator))return;try{wlRef.current=await navigator.wakeLock.request('screen');setWl(true);wlRef.current.addEventListener('release',()=>setWl(false));}catch{}};
+  const relWL=()=>{if(wlRef.current){wlRef.current.release().catch(()=>{});wlRef.current=null;setWl(false);}};
+  useEffect(()=>{if(screen==='active'&&workStart)acqWL();else relWL();return relWL;},[screen,workStart]);
+  useEffect(()=>{const fn=()=>{if(document.visibilityState==='visible'&&screen==='active'&&workStart&&!wlRef.current)acqWL();};document.addEventListener('visibilitychange',fn);return()=>document.removeEventListener('visibilitychange',fn);},[screen,workStart]);
+
+  // ── nav ──
+  const goHome=()=>{setNavTab('home');setScreen('home');};
+  const navTo=t=>{setNavTab(t);setScreen(t);};
+
+  // ── workout start/resume ──
+  const openPreview=cfg=>{setPvCfg(cfg);setScreen('preview');};
+  const openPreviewById=id=>{openPreview(eff(id,cp));};
+  const enterEditDay=id=>{
+    const cust=cp[id]||{};const buf={};
+    DAYS[id].blocks.forEach(b=>b.exercises.forEach(ex=>{buf[ex.id]={sets:cust[ex.id]?.sets??ex.sets,reps:cust[ex.id]?.reps??ex.reps,enabled:cust[ex.id]?.enabled!==false};}));
+    setEditBuf(buf);setEditingReps(null);setPvCfg(eff(id,cp));setScreen('editday');
+  };
+  const saveEditDay=()=>{
+    const id=pvCfg.id;const newCp={...cp,[id]:editBuf};saveJ(PK,newCp);setCp(newCp);setPvCfg(eff(id,newCp));setScreen('preview');
+  };
+  const resetDay=()=>{const id=pvCfg.id;const newCp={...cp};delete newCp[id];saveJ(PK,newCp);setCp(newCp);enterEditDay(id);};
+
+  const startWorkout=cfg=>{
+    const now=Date.now();setActiveCfg(cfg);setSets({});setExNotes({});setWorkStart(now);setElapsed(0);
+    setAddingTo(null);setRestOn(false);setRestSec(0);setShowNoteFor(null);setShowFinish(false);setScreen('active');
+  };
+  const resumeWorkout=()=>{
+    if(!saved)return;
+    const cfg=saved.activeCfg||{id:saved.dayId,name:saved.dayName||getDayName({dayId:saved.dayId}),blocks:[]};
+    setActiveCfg(cfg);setSets(saved.sets||{});setExNotes(saved.exNotes||{});
+    setWorkStart(saved.workStart);setElapsed(Math.floor((Date.now()-saved.workStart)/1000));
+    setAddingTo(null);setRestOn(false);setSaved(null);setScreen('active');
+  };
+  const discardSaved=()=>{saveJ(SK,null);setSaved(null);};
+
+  const logSet=(exId,rest)=>{
+    const w=parseFloat(inp.weight)||0,r=parseInt(inp.reps)||0;
+    setSets(prev=>({...prev,[exId]:[...(prev[exId]||[]),{weight:w,reps:r,warmup:inp.warmup}]}));
+    setAddingTo(null);setInp({weight:'',reps:'',warmup:false});
+    if(!inp.warmup&&rest>0){setRestSec(rest);setRestOn(true);}
+  };
+  const delSet=(exId,idx)=>setSets(prev=>({...prev,[exId]:prev[exId].filter((_,i)=>i!==idx)}));
+  const getLastSets=exId=>{for(let i=logs.length-1;i>=0;i--)if(logs[i].exercises[exId]?.length)return logs[i].exercises[exId];return null;};
+
+  const requestFinish=()=>{setRestOn(false);setShowFinish(true);};
+  const discardWorkout=()=>{saveJ(SK,null);setShowFinish(false);setActiveCfg(null);setSets({});setExNotes({});setWorkStart(null);goHome();};
+  const saveWorkout=async()=>{
+    saveJ(SK,null);
+    const log={id:Date.now().toString(),dayId:activeCfg.id,dayName:activeCfg.name,date:new Date().toISOString().split('T')[0],dur:elapsed,exercises:sets,notes:exNotes};
+    const nl=[...logs,log];saveJ(LS,nl);setLogs(nl);setShowFinish(false);setSummary(log);
+    if(ns.token&&ns.autoSync){setSyncStatus('syncing');try{await syncLog(log,ns);setSyncStatus('ok');}catch{setSyncStatus('error');}}
+    setWorkStart(null);setRestOn(false);
+  };
+  const closeSummary=()=>{setSummary(null);setActiveCfg(null);setSets({});setExNotes({});setSyncStatus(null);goHome();};
+
+  // history detail
+  const openHD=log=>{setHd(JSON.parse(JSON.stringify(log)));setHdEditSet(null);setConfirmDel(false);setScreen('histdetail');};
+  const delSetHD=(exId,idx)=>{const u={...hd,exercises:{...hd.exercises,[exId]:hd.exercises[exId].filter((_,i)=>i!==idx)}};if(!u.exercises[exId].length)delete u.exercises[exId];setHd(u);const nl=logs.map(l=>l.id===u.id?u:l);saveJ(LS,nl);setLogs(nl);};
+  const saveSetEdit=()=>{if(!hdEditSet)return;const{exId,idx}=hdEditSet;const u={...hd,exercises:{...hd.exercises,[exId]:[...hd.exercises[exId]]}};u.exercises[exId][idx]={...u.exercises[exId][idx],weight:parseFloat(hdSetInp.weight)||0,reps:parseInt(hdSetInp.reps)||0};setHd(u);const nl=logs.map(l=>l.id===u.id?u:l);saveJ(LS,nl);setLogs(nl);setHdEditSet(null);};
+  const delLog=()=>{const nl=logs.filter(l=>l.id!==hd.id);saveJ(LS,nl);setLogs(nl);setHd(null);navTo('history');};
+
+  // settings
+  const openSettings=()=>{setNsDraft({workerUrl:'',dbId:DEFAULT_DB,autoSync:true,...ns});setTestStatus(null);setImportStatus(null);setScreen('settings');};
+  const saveSettings=()=>{saveJ(NK,nsDraft);setNs(nsDraft);setScreen('home');};
+  const testNotion=async()=>{setTestStatus('testing');try{await nFetch('GET',`/databases/${nsDraft.dbId}`,null,nsDraft.token,nsDraft.workerUrl);setTestStatus('ok');}catch(e){setTestStatus('err:'+e.message);}};
+  const doImport=async()=>{setImportStatus('importing');try{const imported=await importFromNotion(nsDraft||ns);const existingIds=new Set(logs.map(l=>l.id));const newLogs=[...logs,...imported.filter(l=>!existingIds.has(l.id))].sort((a,b)=>a.date.localeCompare(b.date));saveJ(LS,newLogs);setLogs(newLogs);setImportStatus(`Imported ${imported.length} (${imported.filter(l=>!existingIds.has(l.id)).length} new)`);}catch(e){setImportStatus('Error: '+e.message);}};
+
+  // prompt generator
+  const toggleEquip=e=>{setPgEquip(prev=>prev.includes(e)?prev.filter(x=>x!==e):[...prev,e]);};
+  const genPrompt=()=>{setPgPrompt(buildPrompt(pgEquip,pgDur,pgFocus,pgNotes));setPgParsed(null);setPgErr('');};
+  const copyPrompt=()=>{navigator.clipboard?.writeText(pgPrompt).then(()=>{setPgCopied(true);setTimeout(()=>setPgCopied(false),2000);});};
+  const parseResp=()=>{setPgErr('');try{const w=parseWorkoutJSON(pgResp);setPgParsed(w);}catch(e){setPgErr('Could not parse: '+e.message);}};
+
+  const weekCount=logs.filter(l=>new Date(l.date+'T12:00')>new Date(Date.now()-7*864e5)).length;
+  const todayIdx=DM[new Date().getDay()]??null;
+
+  // ── components ──
+  const Nav=()=>React.createElement('nav',{className:'nav'},
+    [['home','⊞','Home'],['tools','⚡','Tools'],['history','≡','History'],['progress','↗','Progress']].map(([t,ic,lb])=>
+      React.createElement('button',{key:t,className:'nav-btn'+(navTab===t?' active':''),onClick:()=>navTo(t)},
+        React.createElement('span',{className:'nav-icon'},ic),
+        React.createElement('span',{className:'nav-lbl'},lb)
+      )
+    )
+  );
+  const BkHdr=({title,onBack,right})=>React.createElement('div',{className:'bkhdr'},
+    React.createElement('button',{className:'bkhdr-back',onClick:onBack},'‹ Back'),
+    React.createElement('div',{className:'bkhdr-title'},title),
+    React.createElement('div',{className:'bkhdr-right'},right||null)
+  );
+
+  // ── FINISH SHEET ──
+  const FinishSheet=()=>{
+    const working=Object.values(sets).reduce((s,a)=>s+a.filter(x=>!x.warmup).length,0);
+    const warmups=Object.values(sets).reduce((s,a)=>s+a.filter(x=>x.warmup).length,0);
+    const top=Object.entries(sets).filter(([,s])=>s.some(x=>x.weight>0&&!x.warmup)).slice(0,3);
+    return React.createElement('div',{className:'sheet-backdrop',onClick:e=>{if(e.target===e.currentTarget)setShowFinish(false);}},
+      React.createElement('div',{className:'sheet'},
+        React.createElement('div',{className:'sheet-handle'}),
+        React.createElement('h3',{style:{marginBottom:4,fontSize:18}},'Save workout?'),
+        React.createElement('p',{style:{color:'var(--sub)',fontSize:13,marginBottom:16}},
+          fmtDur(elapsed)+' · '+working+' working sets'+(warmups?' · '+warmups+' warmup':'')),
+        top.length>0&&React.createElement('div',{style:{marginBottom:16}},
+          top.map(([exId,s])=>{const ex=ALL_EX.find(e=>e.id===exId);const ws=s.filter(x=>!x.warmup);return React.createElement('div',{key:exId,style:{fontSize:13,color:'var(--sub)',marginBottom:4}},React.createElement('span',{style:{color:'var(--text)',fontWeight:500}},ex?.name),' · '+ws.map(s=>s.weight>0?s.weight+'kg×'+s.reps:'BW×'+s.reps).join(', '));})),
+        ns.token&&React.createElement('div',{className:'notion-badge',style:{marginBottom:16}},'🔄 Will sync to Notion'),
+        React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:8}},
+          React.createElement('button',{onClick:saveWorkout,className:'btn btn-green'},'Save Workout ✓'),
+          React.createElement('button',{onClick:()=>setShowFinish(false),className:'btn btn-ghost'},'Keep Training'),
+          React.createElement('button',{onClick:discardWorkout,className:'btn btn-red btn-sm'},'Discard workout')
+        )
+      )
+    );
+  };
+
+  // ── SUMMARY ──
+  if(summary){
+    const sc=Object.values(summary.exercises).reduce((s,a)=>s+a.filter(x=>!x.warmup).length,0);
+    const top=Object.entries(summary.exercises).filter(([,s])=>s.some(x=>x.weight>0&&!x.warmup)).slice(0,4);
+    return React.createElement('div',{className:'sumscreen'},
+      React.createElement('div',{style:{fontSize:60,marginBottom:16}},'🎉'),
+      React.createElement('h2',{style:{textAlign:'center',marginBottom:4}},getDayName(summary)+' done!'),
+      React.createElement('p',{style:{color:'var(--sub)',fontSize:14,marginBottom:28,textAlign:'center'}},fmtDate(summary.date)),
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,width:'100%',marginBottom:16}},
+        React.createElement('div',{className:'sumstat'},React.createElement('div',{style:{fontSize:26,fontWeight:700}},fmtDur(summary.dur)),React.createElement('div',{style:{color:'var(--sub)',fontSize:12,marginTop:2}},'Duration')),
+        React.createElement('div',{className:'sumstat'},React.createElement('div',{style:{fontSize:26,fontWeight:700}},sc),React.createElement('div',{style:{color:'var(--sub)',fontSize:12,marginTop:2}},'Sets logged'))
+      ),
+      syncStatus&&React.createElement('div',{style:{marginBottom:16,textAlign:'center',fontSize:13,color:syncStatus==='ok'?'var(--green)':syncStatus==='error'?'var(--red)':'var(--sub)'}},
+        syncStatus==='syncing'?'Syncing to Notion…':syncStatus==='ok'?'✓ Saved to Notion':'⚠ Notion sync failed'),
+      top.length>0&&React.createElement('div',{style:{width:'100%',marginBottom:28}},
+        React.createElement('p',{style:{color:'var(--sub)',fontSize:11,letterSpacing:1,marginBottom:10,textTransform:'uppercase'}},'Top lifts'),
+        top.map(([exId,s])=>{const ex=ALL_EX.find(e=>e.id===exId);const ws=s.filter(x=>!x.warmup);const mw=Math.max(...ws.map(x=>x.weight));return React.createElement('div',{key:exId,style:{background:'var(--card)',borderRadius:10,padding:'10px 14px',marginBottom:6,display:'flex',justifyContent:'space-between'}},React.createElement('span',{style:{fontSize:13}},ex?.name),React.createElement('span',{style:{fontSize:13,fontWeight:700,color:'var(--blue)'}},mw+'kg'));})
+      ),
+      React.createElement('button',{onClick:closeSummary,className:'btn btn-blue',style:{maxWidth:320,width:'100%'}},'Back to Home')
+    );
+  }
+
+  // ── HOME ──
+  if(screen==='home') return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+    React.createElement('div',{className:'screen'},React.createElement('div',{className:'pad'},
+      React.createElement('div',{className:'ptop between',style:{marginBottom:20}},
+        React.createElement('div',null,React.createElement('h1',null,greet()),React.createElement('p',{style:{color:'var(--sub)',fontSize:14,marginTop:2}},weekCount+' session'+(weekCount!==1?'s':'')+' this week')),
+        React.createElement('button',{onClick:openSettings,style:{background:'none',border:'none',cursor:'pointer',fontSize:22,color:'var(--sub)',padding:'4px'}},'⚙')
+      ),
+      saved&&React.createElement('div',{className:'resumebanner'},
+        React.createElement('div',{style:{fontSize:13,fontWeight:600,color:'var(--blue)',marginBottom:4}},'⚡ Unfinished workout'),
+        React.createElement('div',{style:{fontSize:14,fontWeight:600,marginBottom:2}},saved.dayName||DAYS[saved.dayId]?.name||'Workout'),
+        React.createElement('div',{style:{fontSize:12,color:'var(--sub)',marginBottom:12}},Object.values(saved.sets||{}).reduce((s,a)=>s+a.length,0)+' sets · started '+new Date(saved.workStart).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})),
+        React.createElement('div',{className:'row'},
+          React.createElement('button',{onClick:discardSaved,className:'btn btn-red btn-sm',style:{flex:1}},'Discard'),
+          React.createElement('button',{onClick:resumeWorkout,className:'btn btn-blue btn-sm',style:{flex:2}},'Resume →')
+        )
+      ),
+      todayIdx!==null?React.createElement('div',{className:'card',style:{borderLeft:'3px solid var(--blue)'}},
+        React.createElement('div',{className:'ci'},
+          React.createElement('div',{style:{fontSize:11,color:'var(--blue)',letterSpacing:1,marginBottom:4,fontWeight:600}},'TODAY'),
+          React.createElement('div',{style:{fontSize:20,fontWeight:700,marginBottom:2}},DAYS[todayIdx].name),
+          React.createElement('div',{style:{color:'var(--sub)',fontSize:13,marginBottom:14}},eff(todayIdx,cp).blocks.flatMap(b=>b.exercises.filter(e=>e.enabled)).length+' exercises'),
+          React.createElement('div',{className:'row'},
+            React.createElement('button',{onClick:()=>openPreviewById(todayIdx),className:'btn btn-ghost',style:{flex:1}},'View'),
+            React.createElement('button',{onClick:()=>startWorkout(eff(todayIdx,cp)),className:'btn btn-blue',style:{flex:2}},'Start →')
+          )
+        )
+      ):React.createElement('div',{className:'card'},React.createElement('div',{className:'ci',style:{textAlign:'center',padding:'20px',color:'var(--sub)',fontSize:14}},'Rest day')),
+      React.createElement('p',{className:'sec'},'BLS Plan'),
+      DAYS.map(d=>{const dl=logs.filter(l=>l.dayId===d.id);const ll=dl[dl.length-1];return React.createElement('div',{key:d.id,className:'card',onClick:()=>openPreviewById(d.id),style:{cursor:'pointer'}},
+        React.createElement('div',{className:'ci between'},
+          React.createElement('div',null,React.createElement('div',{style:{fontSize:15,fontWeight:600}},d.name),React.createElement('div',{style:{color:'var(--sub)',fontSize:12,marginTop:2}},d.short+' · '+eff(d.id,cp).blocks.flatMap(b=>b.exercises.filter(e=>e.enabled)).length+' exercises')),
+          React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},React.createElement('span',{style:{fontSize:12,color:'var(--dim)'}},ll?'Last '+fmtDate(ll.date):'Not started'),React.createElement('span',{style:{color:'var(--dim)',fontSize:20}},'›'))
+        )
+      );})
+    )),
+    React.createElement(Nav)
+  );
+
+  // ── SETTINGS ──
+  if(screen==='settings'){
+    const d=nsDraft||ns;
+    const copyCF=()=>{
+      // Try modern clipboard API first
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(CF_WORKER).then(()=>{setCfCopied(true);setTimeout(()=>setCfCopied(false),2500);}).catch(()=>fallbackCopy());
+      } else { fallbackCopy(); }
+    };
+    const fallbackCopy=()=>{
+      const ta=document.getElementById('cf-worker-code');
+      if(ta){ta.select();ta.setSelectionRange(0,99999);try{document.execCommand('copy');setCfCopied(true);setTimeout(()=>setCfCopied(false),2500);}catch{}}
+    };
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement(BkHdr,{title:'Settings',onBack:()=>setScreen('home'),right:React.createElement('button',{onClick:saveSettings,style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:15,fontWeight:600}},'Save')}),
+      React.createElement('div',{className:'screen nonav'},React.createElement('div',{className:'pad',style:{paddingTop:20}},
+
+        // Step 1: Cloudflare Worker
+        React.createElement('p',{className:'sec',style:{marginTop:0}},'Step 1 — Deploy your proxy (one time)'),
+        React.createElement('div',{className:'card'},React.createElement('div',{className:'ci'},
+          React.createElement('p',{style:{fontSize:13,color:'var(--sub)',lineHeight:1.7,marginBottom:14}},
+            'Public CORS proxies are unreliable. A free Cloudflare Worker gives you a personal, permanent proxy in ~5 minutes.'),
+          React.createElement('textarea',{id:'cf-worker-code',readOnly:true,value:CF_WORKER,
+            style:{width:'100%',height:100,fontSize:11,fontFamily:'monospace',color:'var(--sub)',
+              background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,
+              padding:'10px 12px',lineHeight:1.5,resize:'none',marginBottom:12}}),
+          React.createElement('p',{style:{fontSize:11,color:'var(--dim)',marginBottom:8}},'Tap the code above → Select All → Copy — or use the button:'),
+          React.createElement('button',{onClick:copyCF,className:'btn btn-ghost btn-sm',style:{marginBottom:12}},cfCopied?'✓ Copied!':'Copy Worker code'),
+          React.createElement('div',{style:{fontSize:13,color:'var(--sub)',lineHeight:1.9}},
+            React.createElement('span',{style:{color:'var(--text)',fontWeight:500}},'1. '), 'workers.cloudflare.com → sign up free\n',
+            React.createElement('span',{style:{color:'var(--text)',fontWeight:500}},'2. '), 'Workers & Pages → Create → "Hello World"\n',
+            React.createElement('span',{style:{color:'var(--text)',fontWeight:500}},'3. '), 'Paste the copied code → Deploy\n',
+            React.createElement('span',{style:{color:'var(--text)',fontWeight:500}},'4. '), 'Copy your .workers.dev URL → paste below'
+          )
+        )),
+
+        // Step 2: Configure
+        React.createElement('p',{className:'sec'},'Step 2 — Configure'),
+        React.createElement('div',{className:'card'},React.createElement('div',{className:'ci'},
+          React.createElement('div',{style:{marginBottom:12}},
+            React.createElement('div',{style:{fontSize:12,color:'var(--sub)',marginBottom:6}},'Worker URL'),
+            React.createElement('input',{type:'text',placeholder:'https://notion-proxy.yourname.workers.dev',value:d.workerUrl||'',
+              onChange:e=>setNsDraft({...d,workerUrl:e.target.value}),style:{fontSize:13}})
+          ),
+          React.createElement('div',{style:{marginBottom:12}},
+            React.createElement('div',{style:{display:'flex',justifyContent:'space-between',marginBottom:6}},
+              React.createElement('div',{style:{fontSize:12,color:'var(--sub)'}},'Notion API Token'),
+              d.token&&React.createElement('div',{style:{fontSize:11,color:'var(--dim)'}},d.token.replace(/[^\x20-\x7E]/g,'').trim().length+' chars')
+            ),
+            React.createElement('input',{type:'password',placeholder:'ntn_xxxxxxxxxxxx',value:d.token||'',
+              onChange:e=>setNsDraft({...d,token:e.target.value.replace(/[^\x20-\x7E]/g,'').trim()}),
+              style:{fontSize:14,letterSpacing:1}})
+          ),
+          React.createElement('p',{style:{fontSize:11,color:'var(--dim)',marginBottom:12,lineHeight:1.5}},'Get token at notion.so/my-integrations — share the "🏋 Workout Log" database with your integration.'),
+          React.createElement('div',{style:{marginBottom:16}},
+            React.createElement('div',{style:{fontSize:12,color:'var(--sub)',marginBottom:6}},'Database ID (pre-filled)'),
+            React.createElement('input',{type:'text',value:d.dbId||DEFAULT_DB,onChange:e=>setNsDraft({...d,dbId:e.target.value})})
+          ),
+          React.createElement('div',{className:'settings-row'},
+            React.createElement('div',null,
+              React.createElement('div',{style:{fontSize:14,fontWeight:500}},'Auto-sync on save'),
+              React.createElement('div',{style:{fontSize:12,color:'var(--sub)'}},'Upload to Notion after each workout')
+            ),
+            React.createElement('button',{className:'toggle '+(d.autoSync?'on':'off'),onClick:()=>setNsDraft({...d,autoSync:!d.autoSync})},
+              React.createElement('div',{className:'toggle-knob'})
+            )
+          ),
+          React.createElement('div',{className:'row',style:{marginTop:14}},
+            React.createElement('button',{onClick:testNotion,className:'btn btn-ghost btn-sm',style:{flex:1}},testStatus==='testing'?'Testing…':'Test connection'),
+            React.createElement('button',{onClick:doImport,className:'btn btn-blue btn-sm',style:{flex:1}},importStatus==='importing'?'Importing…':'Import from Notion')
+          ),
+          testStatus&&testStatus!=='testing'&&React.createElement('div',{style:{marginTop:10,padding:'10px 12px',borderRadius:8,background:testStatus==='ok'?'var(--green-bg)':'var(--red-bg)',border:'1px solid '+(testStatus==='ok'?'var(--green-bd)':'var(--red-bd)')}},
+            React.createElement('p',{style:{fontSize:13,fontWeight:600,color:testStatus==='ok'?'var(--green)':'var(--red)',marginBottom:testStatus==='ok'?0:4}},testStatus==='ok'?'✓ Connected — Notion sync is working!':'⚠ '+testStatus.replace('err:','')),
+            testStatus!=='ok'&&React.createElement('p',{style:{fontSize:11,color:'var(--sub)',lineHeight:1.5}},'Check: Worker is deployed · Worker URL is correct · Token is valid · Database is shared with integration')
+          ),
+          importStatus&&importStatus!=='importing'&&React.createElement('p',{style:{fontSize:12,marginTop:10,color:importStatus.startsWith('Error')?'var(--red)':'var(--green)'}},importStatus)
+        )),
+
+        // Data
+        React.createElement('p',{className:'sec'},'Local data'),
+        React.createElement('div',{className:'card'},React.createElement('div',{className:'ci between'},
+          React.createElement('div',null,React.createElement('div',{style:{fontSize:14}},'Workouts on device'),React.createElement('div',{style:{color:'var(--sub)',fontSize:12}},logs.length+' sessions')),
+          React.createElement('button',{onClick:()=>{if(confirm('Delete ALL local workout data? This cannot be undone.')){saveJ(LS,[]);setLogs([]);}},style:{color:'var(--red)',background:'none',border:'none',cursor:'pointer',fontSize:13}},'Clear all')
+        ))
+      ))
+    );
+  }
+
+  // ── PREVIEW ──
+  if(screen==='preview'&&pvCfg){
+    const isMain=typeof pvCfg.id==='number';
+    const dl=logs.filter(l=>l.dayId===pvCfg.id);const ll=dl[dl.length-1];
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement(BkHdr,{title:pvCfg.name,onBack:()=>setScreen(navTab),
+        right:isMain?React.createElement('button',{onClick:()=>enterEditDay(pvCfg.id),style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:15,fontWeight:500}},'Edit'):null}),
+      React.createElement('div',{className:'screen nonav'},React.createElement('div',{className:'pad',style:{paddingTop:16}},
+        ll&&React.createElement('div',{style:{background:'var(--surface)',borderRadius:'var(--rs)',padding:'12px 14px',marginBottom:16}},
+          React.createElement('div',{style:{fontSize:11,color:'var(--sub)',letterSpacing:1,marginBottom:6,textTransform:'uppercase'}},'Last session'),
+          React.createElement('div',{className:'between'},React.createElement('span',{style:{fontSize:14,fontWeight:600}},fmtDate(ll.date)),React.createElement('span',{style:{fontSize:13,color:'var(--blue)'}},fmtDur(ll.dur)+' · '+Object.values(ll.exercises).reduce((s,a)=>s+a.length,0)+' sets'))
+        ),
+        pvCfg.blocks.map((block,bi)=>{
+          const col=BC[block.type]||'blue';
+          return React.createElement('div',{key:bi},
+            React.createElement('p',{className:'sec'},React.createElement('span',{className:'tag tag-'+col,style:{fontSize:10}},BL[block.type]||block.type),block.label),
+            React.createElement('div',{className:'card'},block.exercises.map((ex,ei)=>React.createElement('div',{key:ex.id,style:{padding:'11px 16px',borderBottom:ei<block.exercises.length-1?'.5px solid var(--border)':'none',opacity:(ex.enabled!==false)?1:.35}},
+              React.createElement('div',{className:'between'},
+                React.createElement('div',null,React.createElement('div',{style:{fontSize:14,fontWeight:500}},ex.name),React.createElement('div',{style:{fontSize:12,color:'var(--sub)',marginTop:2}},ex.sets+' × '+ex.reps)),
+                ex.enabled===false&&React.createElement('span',{style:{fontSize:11,color:'var(--dim)'}},'Skipped')
+              )
+            )))
+          );
+        }),
+        React.createElement('div',{style:{marginTop:8}},
+          React.createElement('div',{className:'row'},
+            isMain&&React.createElement('button',{onClick:()=>enterEditDay(pvCfg.id),className:'btn btn-ghost',style:{flex:1}},'Edit Plan'),
+            React.createElement('button',{onClick:()=>startWorkout(pvCfg),className:'btn btn-blue',style:{flex:isMain?2:1}},'Start Workout →')
+          )
+        )
+      ))
+    );
+  }
+
+  // ── EDIT DAY ──
+  if(screen==='editday'&&pvCfg){
+    const dayId=pvCfg.id;
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement(BkHdr,{title:'Edit '+pvCfg.name,onBack:()=>setScreen('preview'),right:React.createElement('button',{onClick:saveEditDay,style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:15,fontWeight:600}},'Save')}),
+      React.createElement('div',{className:'screen nonav'},React.createElement('div',{style:{padding:'12px 0 32px'}},
+        DAYS[dayId].blocks.map((block)=>{
+          const col=BC[block.type];
+          return React.createElement('div',{key:block.label},
+            React.createElement('p',{className:'sec',style:{padding:'0 16px'}},React.createElement('span',{className:'tag tag-'+col,style:{fontSize:10}},BL[block.type]),block.label),
+            React.createElement('div',{className:'card',style:{margin:'0 16px 10px'}},
+              block.exercises.map((ex)=>{
+                const buf=editBuf[ex.id]||{sets:ex.sets,reps:ex.reps,enabled:true};
+                const isEd=editingReps===ex.id;
+                return React.createElement('div',{key:ex.id,className:'ex-row-edit',style:{opacity:buf.enabled?1:.45}},
+                  React.createElement('button',{className:'tog '+(buf.enabled?'on':'off'),onClick:()=>setEditBuf(p=>({...p,[ex.id]:{...buf,enabled:!buf.enabled}}))},buf.enabled?'✓':'✗'),
+                  React.createElement('div',{style:{flex:1,minWidth:0}},
+                    React.createElement('div',{style:{fontSize:14,fontWeight:500}},ex.name),
+                    isEd?React.createElement('div',{style:{display:'flex',alignItems:'center',gap:6,marginTop:6}},
+                      React.createElement('input',{type:'number',value:buf.sets,style:{width:44,fontSize:14,padding:'4px 6px',borderRadius:6},onChange:e=>setEditBuf(p=>({...p,[ex.id]:{...buf,sets:parseInt(e.target.value)||1}}))}),
+                      React.createElement('span',{style:{color:'var(--sub)',fontSize:13}},'sets ×'),
+                      React.createElement('input',{type:'text',value:buf.reps,style:{width:70,fontSize:14,padding:'4px 6px',borderRadius:6},onChange:e=>setEditBuf(p=>({...p,[ex.id]:{...buf,reps:e.target.value}}))}),
+                      React.createElement('button',{onClick:()=>setEditingReps(null),style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}},'Done')
+                    ):React.createElement('div',{style:{fontSize:12,color:'var(--sub)',marginTop:2}},buf.sets+' × '+buf.reps)
+                  ),
+                  !isEd&&React.createElement('button',{onClick:()=>setEditingReps(ex.id),style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13,padding:'4px 8px',flexShrink:0}},'Edit')
+                );
+              })
+            )
+          );
+        }),
+        React.createElement('div',{style:{padding:'8px 16px'}},React.createElement('button',{onClick:resetDay,className:'btn btn-ghost btn-sm',style:{width:'100%'}},'Reset to default plan'))
+      ))
+    );
+  }
+
+  // ── ACTIVE WORKOUT ──
+  if(screen==='active'&&activeCfg){
+    const totalTarget=activeCfg.blocks.flatMap(b=>b.exercises.filter(e=>e.enabled!==false)).reduce((s,e)=>s+e.sets,0);
+    const totalWorking=Object.values(sets).reduce((s,arr)=>s+arr.filter(x=>!x.warmup).length,0);
+    const pct=Math.min(100,Math.round(totalWorking/totalTarget*100));
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      showFinish&&React.createElement(FinishSheet),
+      React.createElement('div',{className:'stickhdr'},
+        React.createElement('div',{className:'between'},
+          React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:18,fontWeight:700,display:'flex',alignItems:'center',gap:8}},activeCfg.name,wl&&React.createElement('span',{className:'wakebadge'},'☀ on')),
+            React.createElement('div',{style:{color:'var(--sub)',fontSize:13}},fmtDur(elapsed)+' · '+totalWorking+'/'+totalTarget+' sets')
+          ),
+          React.createElement('button',{onClick:requestFinish,className:'btn btn-green btn-sm',style:{width:'auto'}},'Finish ✓')
+        ),
+        React.createElement('div',{className:'progbar'},React.createElement('div',{className:'progfill',style:{width:pct+'%'}})),
+        restOn&&restSec>0&&React.createElement('div',{className:'restbanner'},
+          React.createElement('span',{style:{color:'var(--orange)',fontWeight:600,fontSize:14}},'Rest'),
+          React.createElement('span',{style:{fontSize:28,fontWeight:700,color:'var(--orange)'}},restSec+'s'),
+          React.createElement('button',{onClick:()=>{setRestOn(false);setRestSec(0);},style:{color:'var(--orange)',background:'none',border:'none',cursor:'pointer',fontSize:13,textDecoration:'underline'}},'Skip')
+        )
+      ),
+      React.createElement('div',{className:'screen nonav',style:{padding:'8px 16px 40px'}},
+        activeCfg.blocks.map((block,bi)=>{
+          const enabled=block.exercises.filter(e=>e.enabled!==false);if(!enabled.length)return null;
+          const col=BC[block.type]||'blue';
+          return React.createElement('div',{key:bi},
+            React.createElement('p',{className:'sec'},React.createElement('span',{className:'tag tag-'+col,style:{fontSize:10}},BL[block.type]||block.type),block.label),
+            enabled.map(ex=>{
+              const logged=sets[ex.id]||[];const working=logged.filter(s=>!s.warmup);
+              const last=getLastSets(ex.id);const isAdding=addingTo===ex.id;const note=exNotes[ex.id]||'';
+              return React.createElement('div',{key:ex.id,className:'card'},
+                React.createElement('div',{className:'ci'},
+                  React.createElement('div',{className:'between',style:{alignItems:'flex-start',gap:8}},
+                    React.createElement('div',{style:{flex:1,minWidth:0}},
+                      React.createElement('div',{style:{fontSize:15,fontWeight:600,marginBottom:2}},ex.name),
+                      React.createElement('div',{style:{color:'var(--sub)',fontSize:13}},ex.sets+' × '+ex.reps),
+                      ex.note&&React.createElement('div',{style:{color:'var(--dim)',fontSize:11,marginTop:2,fontStyle:'italic'}},ex.note),
+                      last&&React.createElement('div',{style:{color:'var(--dim)',fontSize:11,marginTop:3}},'Last: '+last.filter(s=>!s.warmup).slice(0,3).map(s=>s.weight>0?s.weight+'×'+s.reps:'BW×'+s.reps).join(', '))
+                    ),
+                    React.createElement('div',{style:{display:'flex',gap:4,flexWrap:'wrap',justifyContent:'flex-end',maxWidth:100,flexShrink:0}},
+                      Array.from({length:ex.sets}).map((_,i)=>React.createElement('div',{key:i,className:'bubble'+(working[i]?' done':'')},working[i]?'✓':i+1))
+                    )
+                  ),
+                  logged.length>0&&React.createElement('div',{style:{display:'flex',flexWrap:'wrap',marginTop:10}},
+                    logged.map((s,i)=>React.createElement('span',{key:i,className:'chip '+(s.warmup?'chip-warm':'chip-work')},
+                      s.warmup?'W · ':null,s.weight>0?s.weight+'kg × '+s.reps:'BW × '+s.reps,
+                      React.createElement('button',{className:'chip-del',onClick:()=>delSet(ex.id,i),style:{color:s.warmup?'var(--sub)':'var(--green)'}},'×')
+                    ))
+                  ),
+                  showNoteFor===ex.id?
+                    React.createElement('div',{style:{display:'flex',gap:6,marginTop:10,alignItems:'center'}},
+                      React.createElement('input',{type:'text',placeholder:'Note…',value:note,onChange:e=>setExNotes(p=>({...p,[ex.id]:e.target.value})),style:{flex:1,fontSize:13,padding:'8px 10px'}}),
+                      React.createElement('button',{onClick:()=>setShowNoteFor(null),style:{color:'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600,whiteSpace:'nowrap'}},'Done')
+                    ):React.createElement('div',{className:'note-chip',onClick:()=>setShowNoteFor(ex.id)},note?'📝 '+note:'+ Add note'),
+                  !isAdding&&React.createElement('button',{
+                    onClick:()=>{setAddingTo(ex.id);const l=getLastSets(ex.id);const ref=l?.[working.length]??l?.[0];setInp(ref?{weight:String(ref.weight),reps:String(ref.reps),warmup:false}:{weight:'',reps:'',warmup:false});},
+                    className:'btn btn-'+col+' btn-sm',style:{width:'100%',marginTop:12}
+                  },'+ Add set')
+                ),
+                isAdding&&React.createElement('div',{style:{padding:'14px 16px',borderTop:'.5px solid var(--border)',background:'rgba(0,0,0,.3)'}},
+                  React.createElement('div',{className:'tsel'},
+                    React.createElement('button',{className:'tsel-btn'+(!inp.warmup?' sel':''),onClick:()=>setInp(p=>({...p,warmup:false}))},'Working'),
+                    React.createElement('button',{className:'tsel-btn'+(inp.warmup?' selw':''),onClick:()=>setInp(p=>({...p,warmup:true}))},'Warmup W')
+                  ),
+                  React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr auto 1fr',gap:8,alignItems:'flex-end',marginBottom:12}},
+                    React.createElement('div',null,React.createElement('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,letterSpacing:.5}},'WEIGHT (kg)'),React.createElement('input',{type:'number',placeholder:'0',value:inp.weight,inputMode:'decimal',onChange:e=>setInp(p=>({...p,weight:e.target.value}))})),
+                    React.createElement('div',{style:{fontSize:22,color:'var(--dim)',paddingBottom:11,textAlign:'center'}},'×'),
+                    React.createElement('div',null,React.createElement('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:6,letterSpacing:.5}},'REPS'),React.createElement('input',{type:'number',placeholder:'0',value:inp.reps,inputMode:'numeric',onChange:e=>setInp(p=>({...p,reps:e.target.value}))}))
+                  ),
+                  React.createElement('div',{className:'row'},
+                    React.createElement('button',{onClick:()=>{setAddingTo(null);setInp({weight:'',reps:'',warmup:false});},className:'btn btn-ghost btn-sm',style:{flex:1}},'Cancel'),
+                    React.createElement('button',{onClick:()=>logSet(ex.id,ex.rest),className:'btn btn-green btn-sm',style:{flex:2}},inp.warmup?'Log warmup W':'Log set ✓')
+                  )
+                )
+              );
+            })
+          );
+        })
+      )
+    );
+  }
+
+  // ── HISTORY ──
+  if(screen==='history'){
+    const sorted=[...logs].reverse().slice(0,40);
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement('div',{className:'screen'},React.createElement('div',{className:'pad'},
+        React.createElement('h2',{className:'ptop',style:{marginBottom:20}},'History'),
+        sorted.length===0&&React.createElement('div',{className:'empty'},'No workouts yet.\nStart a session from Home.'),
+        sorted.map(log=>{
+          const sc=Object.values(log.exercises).reduce((s,a)=>s+a.filter(x=>!x.warmup).length,0);
+          const top=Object.entries(log.exercises).filter(([,s])=>s.some(x=>x.weight>0&&!x.warmup)).slice(0,3);
+          return React.createElement('div',{key:log.id,className:'card',onClick:()=>openHD(log),style:{cursor:'pointer'}},
+            React.createElement('div',{className:'ci'},
+              React.createElement('div',{className:'between',style:{marginBottom:top.length?8:0}},
+                React.createElement('div',null,React.createElement('div',{style:{fontSize:16,fontWeight:700}},getDayName(log)),React.createElement('div',{style:{color:'var(--sub)',fontSize:12,marginTop:2}},fmtDate(log.date))),
+                React.createElement('div',{style:{textAlign:'right',display:'flex',alignItems:'center',gap:8}},
+                  React.createElement('div',null,React.createElement('div',{style:{fontSize:14,fontWeight:600,color:'var(--blue)'}},fmtDur(log.dur)),React.createElement('div',{style:{color:'var(--sub)',fontSize:12}},sc+' sets')),
+                  React.createElement('span',{style:{color:'var(--dim)',fontSize:20}},'›')
+                )
+              ),
+              top.map(([exId,exSets])=>{const ex=ALL_EX.find(e=>e.id===exId);const ws=exSets.filter(s=>!s.warmup);return React.createElement('div',{key:exId,style:{display:'flex',justifyContent:'space-between',marginTop:4,gap:8}},React.createElement('span',{style:{fontSize:12,color:'var(--sub)',flexShrink:0}},ex?.name),React.createElement('span',{style:{fontSize:12,color:'var(--text)',fontWeight:500,textAlign:'right'}},ws.map(s=>s.weight>0?s.weight+'×'+s.reps:'BW×'+s.reps).join(', ')));})
+            )
+          );
+        })
+      )),
+      React.createElement(Nav)
+    );
+  }
+
+  // ── HISTORY DETAIL ──
+  if(screen==='histdetail'&&hd){
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement(BkHdr,{title:getDayName(hd),onBack:()=>{setHd(null);navTo('history');}}),
+      React.createElement('div',{className:'screen nonav'},React.createElement('div',{className:'pad',style:{paddingTop:16}},
+        React.createElement('div',{style:{color:'var(--sub)',fontSize:13,marginBottom:16}},fmtDate(hd.date)+' · '+fmtDur(hd.dur)),
+        Object.keys(hd.exercises).length===0&&React.createElement('div',{className:'empty'},'No sets logged.'),
+        Object.entries(hd.exercises).map(([exId,exSets])=>{
+          const ex=ALL_EX.find(e=>e.id===exId);
+          return React.createElement('div',{key:exId,className:'card',style:{marginBottom:10}},React.createElement('div',{className:'ci'},
+            React.createElement('div',{style:{fontSize:14,fontWeight:600,marginBottom:10}},ex?.name||exId),
+            React.createElement('div',{style:{display:'flex',flexWrap:'wrap'}},
+              exSets.map((s,i)=>{
+                const isEd=hdEditSet?.exId===exId&&hdEditSet?.idx===i;
+                if(isEd)return React.createElement('div',{key:i,style:{display:'flex',gap:6,alignItems:'center',margin:'3px 0',width:'100%'}},
+                  React.createElement('input',{type:'number',value:hdSetInp.weight,onChange:e=>setHdSetInp(p=>({...p,weight:e.target.value})),style:{width:70,fontSize:16,padding:'6px 8px'},inputMode:'decimal'}),
+                  React.createElement('span',{style:{color:'var(--sub)'}},'×'),
+                  React.createElement('input',{type:'number',value:hdSetInp.reps,onChange:e=>setHdSetInp(p=>({...p,reps:e.target.value})),style:{width:60,fontSize:16,padding:'6px 8px'},inputMode:'numeric'}),
+                  React.createElement('button',{onClick:saveSetEdit,style:{color:'var(--green)',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}},'Save'),
+                  React.createElement('button',{onClick:()=>setHdEditSet(null),style:{color:'var(--sub)',background:'none',border:'none',cursor:'pointer',fontSize:13}},'Cancel')
+                );
+                return React.createElement('span',{key:i,className:'chip '+(s.warmup?'chip-warm':'chip-work'),onClick:()=>{setHdEditSet({exId,idx:i});setHdSetInp({weight:String(s.weight),reps:String(s.reps)});},style:{cursor:'pointer'}},
+                  s.warmup?'W · ':null,s.weight>0?s.weight+'kg×'+s.reps:'BW×'+s.reps,
+                  React.createElement('button',{className:'chip-del',onClick:e=>{e.stopPropagation();delSetHD(exId,i);},style:{color:s.warmup?'var(--sub)':'var(--green)'}},'×')
+                );
+              })
+            ),
+            hd.notes&&hd.notes[exId]&&React.createElement('div',{style:{marginTop:8,fontSize:12,color:'var(--blue)'}},'📝 '+hd.notes[exId])
+          ));
+        }),
+        React.createElement('div',{style:{marginTop:8}},
+          confirmDel?React.createElement('div',{style:{background:'var(--red-bg)',border:'1px solid var(--red-bd)',borderRadius:'var(--r)',padding:'14px 16px',textAlign:'center'}},
+            React.createElement('p',{style:{fontSize:14,marginBottom:12}},'Delete this workout?'),
+            React.createElement('div',{className:'row'},React.createElement('button',{onClick:()=>setConfirmDel(false),className:'btn btn-ghost btn-sm',style:{flex:1}},'Cancel'),React.createElement('button',{onClick:delLog,className:'btn btn-red btn-sm',style:{flex:1}},'Delete'))
+          ):React.createElement('button',{onClick:()=>setConfirmDel(true),className:'btn btn-red btn-sm'},'Delete workout')
+        )
+      ))
+    );
+  }
+
+  // ── TOOLS ──
+  if(screen==='tools'){
+    const altDays=ALT[altCat]||[];
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement('div',{className:'screen'},React.createElement('div',{className:'pad'},
+        // Alt workouts
+        React.createElement('h2',{className:'ptop',style:{marginBottom:4}},'Alternative Workouts'),
+        React.createElement('p',{style:{color:'var(--sub)',fontSize:13,marginBottom:16}},'When your gym isn\'t available'),
+        React.createElement('div',{className:'cat-tabs'},
+          React.createElement('button',{className:'cat-tab'+(altCat==='bodyweight'?' active':''),onClick:()=>setAltCat('bodyweight')},'🏃 Bodyweight\nNo equipment'),
+          React.createElement('button',{className:'cat-tab'+(altCat==='hotel'?' active':''),onClick:()=>setAltCat('hotel')},'🏨 Hotel Gym\nDumbbells + bench')
+        ),
+        altDays.map(d=>{
+          const dl=logs.filter(l=>l.dayId===d.id);const ll=dl[dl.length-1];
+          return React.createElement('div',{key:d.id,className:'card',onClick:()=>openPreview(d),style:{cursor:'pointer'}},
+            React.createElement('div',{className:'ci between'},
+              React.createElement('div',null,
+                React.createElement('div',{style:{fontSize:15,fontWeight:600}},d.name),
+                React.createElement('div',{style:{color:'var(--sub)',fontSize:12,marginTop:2}},d.desc+' · '+d.blocks.flatMap(b=>b.exercises).length+' exercises')
+              ),
+              React.createElement('div',{style:{display:'flex',alignItems:'center',gap:8}},
+                React.createElement('span',{style:{fontSize:12,color:'var(--dim)'}},ll?'Last '+fmtDate(ll.date):'Not done yet'),
+                React.createElement('span',{style:{color:'var(--dim)',fontSize:20}},'›')
+              )
+            )
+          );
+        }),
+
+        // Prompt generator
+        React.createElement('div',{style:{height:1,background:'var(--border)',margin:'24px 0 20px'}}),
+        React.createElement('h2',{style:{marginBottom:4}},'Claude Workout Generator'),
+        React.createElement('p',{style:{color:'var(--sub)',fontSize:13,marginBottom:16}},'Describe your situation — get a prompt to paste into Claude, then paste the result back here to start the workout'),
+
+        React.createElement('p',{className:'sec',style:{marginTop:0}},'Available equipment'),
+        React.createElement('div',{style:{display:'flex',flexWrap:'wrap',marginBottom:4}},
+          EQUIP_OPTIONS.map(e=>React.createElement('button',{key:e,className:'equip-chip'+(pgEquip.includes(e)?' sel':''),onClick:()=>toggleEquip(e)},e))
+        ),
+
+        React.createElement('p',{className:'sec'},'Time available'),
+        React.createElement('div',{style:{display:'flex',gap:6,flexWrap:'wrap',marginBottom:4}},
+          DURATION_OPTIONS.map(d=>React.createElement('button',{key:d,onClick:()=>setPgDur(d),
+            style:{padding:'7px 14px',borderRadius:20,fontSize:13,fontWeight:600,cursor:'pointer',border:'1px solid '+(pgDur===d?'var(--blue-bd)':'var(--border)'),background:pgDur===d?'var(--blue-bg)':'var(--card)',color:pgDur===d?'var(--blue)':'var(--sub)'}},
+            d+'m'
+          ))
+        ),
+
+        React.createElement('p',{className:'sec'},'Muscle focus'),
+        React.createElement('select',{value:pgFocus,onChange:e=>setPgFocus(e.target.value),style:{marginBottom:4}},
+          React.createElement('option',{value:''},'— Select focus —'),
+          FOCUS_OPTIONS.map(f=>React.createElement('option',{key:f,value:f},f))
+        ),
+
+        React.createElement('p',{className:'sec'},'Additional context (optional)'),
+        React.createElement('textarea',{value:pgNotes,onChange:e=>setPgNotes(e.target.value),placeholder:'e.g. "Back is sore, avoid heavy deadlifts", "Focus on hypertrophy not strength today", "15°C outdoor session"',style:{marginBottom:12,minHeight:70}}),
+
+        React.createElement('button',{onClick:genPrompt,className:'btn btn-purple'},'Generate Prompt'),
+
+        pgPrompt&&React.createElement('div',{style:{marginTop:16}},
+          React.createElement('div',{className:'between',style:{marginBottom:8}},
+            React.createElement('p',{style:{fontSize:13,fontWeight:600,color:'var(--sub)',textTransform:'uppercase',letterSpacing:1}},'Generated Prompt'),
+            React.createElement('button',{onClick:copyPrompt,style:{color:pgCopied?'var(--green)':'var(--blue)',background:'none',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}},pgCopied?'✓ Copied!':'Copy')
+          ),
+          React.createElement('div',{className:'prompt-box'},pgPrompt),
+          React.createElement('p',{style:{fontSize:12,color:'var(--sub)',marginTop:8,lineHeight:1.5}},'↑ Copy this → paste into Claude → copy Claude\'s JSON response → paste below ↓'),
+
+          React.createElement('p',{className:'sec',style:{marginTop:16}},'Paste Claude\'s response'),
+          React.createElement('textarea',{value:pgResp,onChange:e=>{setPgResp(e.target.value);setPgParsed(null);setPgErr('');},placeholder:'Paste Claude\'s JSON response here…',style:{minHeight:120,marginBottom:10,fontFamily:'monospace'}}),
+
+          pgErr&&React.createElement('p',{style:{color:'var(--red)',fontSize:12,marginBottom:8}},'⚠ '+pgErr),
+
+          React.createElement('button',{onClick:parseResp,className:'btn btn-ghost btn-sm',style:{marginBottom:pgParsed?12:0},disabled:!pgResp.trim()},'Parse Response'),
+
+          pgParsed&&React.createElement('div',{className:'parsed-preview'},
+            React.createElement('div',{style:{fontSize:14,fontWeight:600,color:'var(--green)',marginBottom:8}},'✓ '+pgParsed.name),
+            pgParsed.blocks.map((b,i)=>React.createElement('div',{key:i,style:{marginBottom:6}},
+              React.createElement('div',{style:{fontSize:11,color:'var(--sub)',letterSpacing:1,textTransform:'uppercase',marginBottom:3}},b.label),
+              b.exercises.map(ex=>React.createElement('div',{key:ex.id,style:{fontSize:13,color:'var(--text)',paddingLeft:8,marginBottom:2}},ex.name+' · '+ex.sets+'×'+ex.reps))
+            )),
+            React.createElement('button',{onClick:()=>startWorkout(pgParsed),className:'btn btn-green btn-sm',style:{marginTop:12,width:'100%'}},'Start This Workout →')
+          )
+        )
+      )),
+      React.createElement(Nav)
+    );
+  }
+
+  // ── PROGRESS ──
+  if(screen==='progress'){
+    const exLogs=logs.filter(l=>l.exercises[progEx]?.length).map(l=>{const ws=l.exercises[progEx].filter(s=>!s.warmup);return{date:l.date,sets:ws,max:ws.length?Math.max(...ws.map(s=>s.weight)):0};}).filter(l=>l.sets.length>0).reverse().slice(0,12);
+    const pr=exLogs.length?Math.max(...exLogs.map(l=>l.max)):0;
+    const vol=exLogs.length?exLogs[0].sets.reduce((s,x)=>s+(x.weight*x.reps),0):0;
+    return React.createElement('div',{style:{height:'100%',display:'flex',flexDirection:'column'}},
+      React.createElement('div',{className:'screen'},React.createElement('div',{className:'pad'},
+        React.createElement('h2',{className:'ptop',style:{marginBottom:16}},'Progress'),
+        React.createElement('select',{value:progEx,onChange:e=>setProgEx(e.target.value),style:{marginBottom:16}},
+          React.createElement('optgroup',{label:'BLS Plan'},DAYS.flatMap(d=>d.blocks.flatMap(b=>b.exercises)).map(e=>React.createElement('option',{key:e.id,value:e.id},e.name))),
+          React.createElement('optgroup',{label:'Bodyweight'},ALT.bodyweight.flatMap(d=>d.blocks.flatMap(b=>b.exercises)).map(e=>React.createElement('option',{key:e.id,value:e.id},e.name))),
+          React.createElement('optgroup',{label:'Hotel Gym'},ALT.hotel.flatMap(d=>d.blocks.flatMap(b=>b.exercises)).map(e=>React.createElement('option',{key:e.id,value:e.id},e.name)))
+        ),
+        exLogs.length===0?React.createElement('div',{className:'empty'},'No data yet.\nLog a working set to start tracking.'):
+        React.createElement('div',null,
+          React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}},
+            React.createElement('div',{className:'sumstat'},React.createElement('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:4,letterSpacing:.5}},'PERSONAL RECORD'),React.createElement('div',{style:{fontSize:26,fontWeight:700}},pr>0?pr+'kg':'BW')),
+            React.createElement('div',{className:'sumstat'},React.createElement('div',{style:{fontSize:11,color:'var(--sub)',marginBottom:4,letterSpacing:.5}},'LAST SESSION VOL.'),React.createElement('div',{style:{fontSize:26,fontWeight:700}},vol>0?vol+'kg':'-'))
+          ),
+          React.createElement('p',{className:'sec'},'Session history'),
+          exLogs.map((entry,i)=>React.createElement('div',{key:i,className:'card',style:{marginBottom:8}},React.createElement('div',{className:'ci'},
+            React.createElement('div',{className:'between',style:{marginBottom:8}},React.createElement('span',{style:{fontSize:14,fontWeight:600}},fmtDate(entry.date)),entry.max>0&&React.createElement('span',{style:{fontSize:14,fontWeight:700,color:'var(--blue)'}},'Peak '+entry.max+'kg')),
+            React.createElement('div',{style:{display:'flex',gap:5,flexWrap:'wrap'}},entry.sets.map((s,j)=>React.createElement('span',{key:j,className:'tag',style:{background:'var(--card)',color:'var(--sub)',border:'.5px solid var(--border)'}},s.weight>0?s.weight+'kg×'+s.reps:'BW×'+s.reps)))
+          )))
+        )
+      )),
+      React.createElement(Nav)
+    );
+  }
+  return null;
+}
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+</script>
+</body>
+</html>
